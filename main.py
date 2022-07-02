@@ -1,18 +1,16 @@
 from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
-    QDialog,
     QLabel,
-    QPushButton,
     QHBoxLayout,
-    QVBoxLayout,
     QMainWindow
 )
 from PyQt5.QtCore import Qt, QEvent, QTimer
-from PyQt5.QtGui import QMouseEvent, QCloseEvent
+from PyQt5.QtGui import QCloseEvent, QFont, QIcon
 import time
 from pynput import keyboard
 import handle_spotify
+from icon_button import IconButton
 
 
 class MainWindow(QMainWindow):
@@ -21,7 +19,7 @@ class MainWindow(QMainWindow):
 
         self.WIDTH = 500
         self.HEIGHT = 30
-        self.transparancy_low = 0.5
+        self.transparancy_low = 0.6
         self.transparancy_high = 0.8
         self.resize(self.WIDTH, self.HEIGHT)
         self.move(150, 13)
@@ -35,7 +33,7 @@ class MainWindow(QMainWindow):
         self.not_clickable = True
         self.setWindowFlag(Qt.WindowTransparentForInput, self.not_clickable)
 
-        radius = 10
+        radius = 5
         self.main_widget_rounded.setStyleSheet(
             """
             background:rgb(255, 255, 255);
@@ -44,20 +42,42 @@ class MainWindow(QMainWindow):
         )
 
         self.main_layout = QHBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.lbl_songinfo = QLabel("")
-        self.lbl_songinfo.setMinimumHeight(15)
-        self.lbl_songinfo.setMaximumWidth(int(self.WIDTH / 3 * 2))
-        self.lbl_songinfo.setAlignment(Qt.AlignTop)
-        self.main_layout.addWidget(self.lbl_songinfo)
+        self.lbl_songinfo = QLabel()
+        self.lbl_songinfo.setFixedHeight(30)
+        self.lbl_songinfo.setFont(QFont('Times', 10, QFont.Bold))
+        self.lbl_songinfo.setFixedWidth(int(self.WIDTH / 3 * 2))
+        self.lbl_songinfo.setContentsMargins(10, 0, 0, 0)
+        self.main_layout.addWidget(self.lbl_songinfo, alignment=Qt.AlignCenter)
 
-        self.btn_pause = QPushButton("⏸")
-        self.btn_pause.setMinimumHeight(20)
-        self.btn_pause.setStyleSheet("border: 1px solid;")
-        self.main_layout.setContentsMargins(0)
-        self.main_layout.addWidget(self.btn_pause)
+        self.control_layout = QHBoxLayout()
+        self.control_layout.setAlignment(Qt.AlignHCenter)
 
-        self.btn_quit = QPushButton("Quit")
+        self.btn_back = IconButton()
+        self.btn_back.setIcon(QIcon("icons/back.png"))
+        self.btn_back.clicked.connect(self.back)
+        self.control_layout.addWidget(self.btn_back)
+
+        self.btn_pause = IconButton()
+
+        if handle_spotify.is_currently_playing():
+            self.btn_pause.setIcon(QIcon("icons/pause.png"))
+        else:
+            self.btn_pause.setIcon(QIcon("icons/play.png"))
+
+        self.btn_pause.clicked.connect(self.toggle)
+        self.control_layout.addWidget(self.btn_pause)
+
+        self.btn_forward = IconButton()
+        self.btn_forward.setIcon(QIcon("icons/forward.png"))
+        self.btn_forward.clicked.connect(self.forward)
+        self.control_layout.addWidget(self.btn_forward)
+
+        self.main_layout.addLayout(self.control_layout)
+
+        self.btn_quit = IconButton()
+        self.btn_quit.setIcon(QIcon("icons/exit.png"))
         self.btn_quit.clicked.connect(exit)
         self.main_layout.addWidget(self.btn_quit)
 
@@ -70,9 +90,6 @@ class MainWindow(QMainWindow):
         self.update_song.setInterval(1000)
         self.update_song.timeout.connect(self.update_label)
         self.update_song.start()
-
-        # offset to make window draggabel
-        self.offset = None
 
     def enterEvent(self, a0: QEvent) -> None:
         opacity = self.transparancy_low
@@ -94,11 +111,8 @@ class MainWindow(QMainWindow):
         try:
             if key.char == "ß":
                 self.not_clickable = not self.not_clickable
-                print(self.not_clickable)
                 self.setWindowFlag(Qt.WindowTransparentForInput, self.not_clickable)
-                print("before")
                 self.show()
-                print("showed")
         except AttributeError:
             pass
 
@@ -110,22 +124,38 @@ class MainWindow(QMainWindow):
         name, artists = handle_spotify.get_current_track()
         self.lbl_songinfo.setText(f"{name} - {', '.join(artists)}")
 
+    def toggle(self):
+        if (is_playing := handle_spotify.is_currently_playing()) or is_playing is None:
+            self.btn_pause.setIcon(QIcon("icons/play.png"))
+            handle_spotify.pause()
+        else:
+            self.btn_pause.setIcon(QIcon("icons/pause.png"))
+            handle_spotify.resume()
+
+    @staticmethod
+    def back():
+        handle_spotify.back()
+
+    @staticmethod
+    def forward():
+        handle_spotify.forward()
+
     # mouse press, move and releas event to make window draggable
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.offset = event.pos()
-        else:
-            super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event):
-        if self.offset is not None and event.buttons() == Qt.LeftButton:
-            self.move(self.pos() + event.pos() - self.offset)
-        else:
-            super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        self.offset = None
-        super().mouseReleaseEvent(event)
+    # def mousePressEvent(self, event):
+    #     if event.button() == Qt.LeftButton:
+    #         self.offset = event.pos()
+    #     else:
+    #         super().mousePressEvent(event)
+    #
+    # def mouseMoveEvent(self, event):
+    #     if self.offset is not None and event.buttons() == Qt.LeftButton:
+    #         self.move(self.pos() + event.pos() - self.offset)
+    #     else:
+    #         super().mouseMoveEvent(event)
+    #
+    # def mouseReleaseEvent(self, event):
+    #     self.offset = None
+    #     super().mouseReleaseEvent(event)
 
 
 app = QApplication([])

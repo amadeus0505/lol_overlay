@@ -1,7 +1,7 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-scope = "app-remote-control user-read-playback-state"
+scope = "user-modify-playback-state user-read-playback-state"
 
 sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
     scope=scope,
@@ -23,7 +23,43 @@ def get_current_track():
 
     return name, artists
 
+
+def player_available():
+    if len(sp.devices()["devices"]) <= 0 or not sp.devices()["devices"][0]["is_active"]:
+        return False
+    else:
+        return True
+
+
+def pause():
+    if player_available():
+        sp.pause_playback()
+
+
+def resume():
+    if player_available():
+        sp.start_playback()
+
+
+def forward():
+    if player_available():
+        sp.next_track()
+
+
+def back():
+    if player_available():
+        sp.previous_track()
+
+
+def is_currently_playing():
+    try:
+        return sp.current_playback()["is_playing"]
+    except TypeError:
+        return None
+
+
 if __name__ == '__main__':
-    print(get_current_track())
+    print(sp.devices()["devices"][0]["is_active"])
+
 
 # print(f"{name} - {', '.join(artists)}")
