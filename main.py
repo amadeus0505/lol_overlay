@@ -92,19 +92,11 @@ class MainWindow(QMainWindow):
         self.update_song.start()
 
     def enterEvent(self, a0: QEvent) -> None:
-        opacity = self.transparancy_low
-        while opacity < self.transparancy_high:
-            opacity += 0.1
-            self.setWindowOpacity(opacity)
-            time.sleep(0.001)
+        self.setWindowOpacity(self.transparancy_high)
         super().enterEvent(a0)
 
     def leaveEvent(self, a0: QEvent) -> None:
-        opacity = self.transparancy_high
-        while opacity > self.transparancy_low:
-            opacity -= 0.1
-            self.setWindowOpacity(opacity)
-            time.sleep(0.001)
+        self.setWindowOpacity(self.transparancy_low)
         super().leaveEvent(a0)
 
     def keyPress(self, key):

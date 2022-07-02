@@ -9,7 +9,7 @@ class IconButton(QPushButton):
         self.icon_grow = 4
         self.setIconSize(QtCore.QSize(self.icon_size, self.icon_size))
         self.setFont(QtGui.QFont("Times", 15))
-        self.setFixedWidth(35)
+        self.setFixedWidth(34)
 
     def enterEvent(self, a0: QtCore.QEvent) -> None:
         self.setIconSize(QtCore.QSize(self.icon_size + self.icon_grow, self.icon_size + self.icon_grow))
